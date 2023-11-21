@@ -1,21 +1,40 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
+	"log"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/jhson415/reservation-api/api"
+	"github.com/jhson415/reservation-api/db"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func main() {
+	const dbUri = "mongodb://localhost:27017"
+	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(dbUri))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var config = fiber.Config{
+		ErrorHandler: func(c *fiber.Ctx, err error) error {
+			return c.JSON(map[string]string{"error": err.Error()})
+		},
+	}
+
 	listenAddr := flag.String("port", ":5500", "Input the port to change it")
 	flag.Parse()
 
-	app := fiber.New()
-	apiV1 := app.Group("/api/v1")
+	app := fiber.New(config)
 
-	apiV1.Get("/user", api.UserHandler)
+	userHandler := api.NewUserHandler(db.NewMongoUserStore(client))
+
+	apiV1 := app.Group("/api/v1")
+	apiV1.Get("/user/:id", userHandler.HandleGetUser)
 	app.Listen(*listenAddr)
 	fmt.Println("Close!")
 }
