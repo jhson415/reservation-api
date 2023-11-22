@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/mail"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -14,7 +15,7 @@ const (
 	milPassword = 8
 )
 
-type UserPostRequest struct {
+type UserPostParams struct {
 	FirstName string `json:"firstName"`
 	LastName  string `json:"lastName"`
 	Email     string `json:"email"`
@@ -29,7 +30,7 @@ type User struct {
 	EncryptedPassword string             `bson:"encryptedPassword,omitempty" json:"-"`
 }
 
-func ValidateUserRequest(user UserPostRequest) []string {
+func ValidateUserParams(user UserPostParams) []string {
 	var errorList = []string{}
 	if len(user.FirstName) < minName {
 		errorList = append(errorList, fmt.Sprintf("First Name should be longer than %d", minName))
@@ -46,7 +47,7 @@ func ValidateUserRequest(user UserPostRequest) []string {
 	return errorList
 }
 
-func CreateUserFromRequest(req *UserPostRequest) (*User, error) {
+func CreateUserFromParams(req *UserPostParams) (*User, error) {
 	var user = User{}
 	user.FirstName = req.FirstName
 	user.LastName = req.LastName
@@ -60,4 +61,20 @@ func CreateUserFromRequest(req *UserPostRequest) (*User, error) {
 
 	return &user, nil
 
+}
+
+type UpdateUserParams struct {
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
+}
+
+func (p UpdateUserParams) ToBson() bson.M {
+	m := bson.M{}
+	if len(p.FirstName) > 0 {
+		m["firstName"] = p.FirstName
+	}
+	if len(p.LastName) > 0 {
+		m["lastName"] = p.LastName
+	}
+	return m
 }

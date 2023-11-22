@@ -1,5 +1,4 @@
-// TODO Create Delete user function
-// TODO handle no user found error in get by id
+// TODO Create update user func
 
 package main
 
@@ -37,7 +36,9 @@ func main() {
 	userHandler := api.NewUserHandler(db.NewMongoUserStore(client))
 
 	apiV1 := app.Group("/api/v1")
+	apiV1.Put("/user/:id", userHandler.HandlePutUser)
 	apiV1.Post("/user/", userHandler.HandlePostUser)
+	apiV1.Delete("/user/:id", userHandler.HandleDeleteUser)
 	apiV1.Get("/user/", userHandler.HandleGetUsers)
 	apiV1.Get("/user/:id", userHandler.HandleGetUser)
 	app.Listen(*listenAddr)
@@ -47,5 +48,3 @@ func main() {
 func handlerFoo(c *fiber.Ctx) error {
 	return c.JSON(map[string]string{"msg": "this is the landing!"})
 }
-
-//TODO Create a request type for user post, handler for user post, store for user post
