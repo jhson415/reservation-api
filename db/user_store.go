@@ -89,7 +89,7 @@ func (m MongoUserStore) DeleteUser(ctx context.Context, id string) error {
 }
 
 func (m MongoUserStore) PutUser(ctx context.Context, filter bson.M, params types.UpdateUserParams) error {
-	update := bson.D{{Key: "$set", Value: params.ToBson()}}
+	update := bson.M{"$set": params.ToBson()}
 	_, err := m.coll.UpdateOne(ctx, filter, update)
 	if err != nil {
 		return err
