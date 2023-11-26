@@ -1,4 +1,4 @@
-// TODO Create update user func
+// TODO Create DB Seed -> Default setting of the db when it needs to be reset
 
 package main
 
@@ -16,8 +16,7 @@ import (
 )
 
 func main() {
-	const dbUri = "mongodb://localhost:27017"
-	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(dbUri))
+	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(db.DB_URI))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -35,12 +34,18 @@ func main() {
 
 	userHandler := api.NewUserHandler(db.NewMongoUserStore(client))
 
+	//Version1
 	apiV1 := app.Group("/api/v1")
+	// Hotel
+	apiV1.Get("/hotel/", handlerFoo)
+	apiV1.Get("/room/", handlerFoo)
+	// User
 	apiV1.Put("/user/:id", userHandler.HandlePutUser)
 	apiV1.Post("/user/", userHandler.HandlePostUser)
 	apiV1.Delete("/user/:id", userHandler.HandleDeleteUser)
 	apiV1.Get("/user/", userHandler.HandleGetUsers)
 	apiV1.Get("/user/:id", userHandler.HandleGetUser)
+
 	app.Listen(*listenAddr)
 	fmt.Println("Close!")
 }

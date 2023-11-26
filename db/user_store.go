@@ -12,7 +12,12 @@ import (
 
 const userColl = "users"
 
+type Dropper interface {
+	Drop(ctx context.Context) error
+}
+
 type UserStore interface {
+	Dropper
 	GetUserById(context.Context, string) (*types.User, error)
 	GetUserList(context.Context) (*[]types.User, error)
 	PostUser(context.Context, *types.User) (*types.User, error)
@@ -96,4 +101,11 @@ func (m MongoUserStore) PutUser(ctx context.Context, filter bson.M, params types
 	}
 	return nil
 
+}
+
+func (m MongoUserStore) Drop(ctx context.Context) error {
+	if err := m.coll.Drop(ctx); err != nil {
+		return err
+	}
+	return nil
 }
