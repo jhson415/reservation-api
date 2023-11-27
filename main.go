@@ -36,9 +36,12 @@ func main() {
 
 	//Version1
 	apiV1 := app.Group("/api/v1")
+
 	// Hotel
 	apiV1.Get("/hotel/", handlerFoo)
-	apiV1.Get("/room/", handlerFoo)
+	apiV1.Get("/hotel/:id", handlerFoo)
+	apiV1.Get("/hotel/:id/rooms", handlerFoo)
+
 	// User
 	apiV1.Put("/user/:id", userHandler.HandlePutUser)
 	apiV1.Post("/user/", userHandler.HandlePostUser)
