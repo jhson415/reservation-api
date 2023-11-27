@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"github.com/jhson415/reservation-api/db"
@@ -18,7 +19,7 @@ var (
 			Name:    "H for Living Hotel",
 		},
 		{
-			Country: "Korea",
+			Country: "USA",
 			City:    "California",
 			Name:    "California Hotel",
 		},
@@ -50,15 +51,31 @@ var (
 	client     *mongo.Client
 	roomStore  db.RoomStore
 	hotelStore db.HotelStore
+	userStore  db.UserStore
 	ctx        = context.Background()
 )
 
 func main() {
 	seedHotel()
+	seedUsers()
 
+}
+func init() {
+	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(db.DB_URI))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	hotelStore = db.NewMongoHotelStore(client)
+	userStore = db.NewMongoUserStore(client)
+	roomStore = db.NewMongoRoomStore(client, hotelStore)
 }
 
 func seedHotel() {
+	ctx := context.Background()
+	hotelStore.Drop(ctx)
+	roomStore.Drop(ctx)
+
 	for _, hotel := range hotelList {
 		_, err := hotelStore.PostHotel(context.TODO(), &hotel)
 		if err != nil {
@@ -77,12 +94,24 @@ func seedHotel() {
 	}
 }
 
-func init() {
-	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(db.DB_URI))
+func seedUsers() {
+	userStore.Drop(context.Background())
+
+	userParams := types.UserPostParams{
+		FirstName: "Jayson",
+		LastName:  "Hicck",
+		Email:     "jayson@ee.com",
+		Password:  "this is the suppar!",
+	}
+
+	user, err := types.CreateUserFromParams(&userParams)
 	if err != nil {
 		log.Fatal(err)
 	}
+	user, err = userStore.PostUser(context.TODO(), user)
+	if err != nil {
+		log.Fatalln("Error while posting the user ", err)
+	}
+	fmt.Println(user)
 
-	hotelStore = db.NewMongoHotelStore(client)
-	roomStore = db.NewMongoRoomStore(client, hotelStore)
 }

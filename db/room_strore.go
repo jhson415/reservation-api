@@ -2,8 +2,10 @@ package db
 
 import (
 	"context"
+	"log"
 
 	"github.com/jhson415/reservation-api/types"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -11,7 +13,9 @@ import (
 const roomColl = "rooms"
 
 type RoomStore interface {
+	Dropper
 	PostRoom(context.Context, *types.Room) (*types.Room, error)
+	GetRoomListByHotelId(context.Context, string) (*[]types.Room, error)
 }
 
 type MongoRoomStore struct {
@@ -34,4 +38,32 @@ func (m MongoRoomStore) PostRoom(ctx context.Context, room *types.Room) (*types.
 	}
 	room.Id = res.InsertedID.(primitive.ObjectID)
 	return room, nil
+}
+
+func (m MongoRoomStore) GetRoomListByHotelId(ctx context.Context, id string) (*[]types.Room, error) {
+	var roomList []types.Room
+	oId, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		log.Fatalln("Error while converting id to objectID", err)
+		return nil, err
+	}
+	cur, err := m.coll.Find(ctx, bson.M{"hotelId": oId})
+	if err != nil {
+		log.Fatalln("Error while creating cursor", err)
+		return nil, err
+	}
+	err = cur.All(ctx, &roomList)
+	if err != nil {
+		log.Fatalln("Failed to decode cursor", err)
+	}
+	return &roomList, nil
+
+}
+
+func (m MongoRoomStore) Drop(ctx context.Context) error {
+	err := m.coll.Drop(ctx)
+	if err != nil {
+		return err
+	}
+	return nil
 }

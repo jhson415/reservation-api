@@ -17,11 +17,11 @@ import (
 )
 
 type testDb struct {
-	db.UserStore
+	db.Store
 }
 
 func (tdb *testDb) dropDb(t *testing.T) {
-	if err := tdb.UserStore.Drop(context.TODO()); err != nil {
+	if err := tdb.Store.User.Drop(context.TODO()); err != nil {
 		t.Error(err)
 	}
 }
@@ -32,7 +32,9 @@ func setup(t *testing.T) *testDb {
 		t.Fatal(err)
 	}
 	return &testDb{
-		UserStore: db.NewMongoUserStore(client),
+		Store: db.Store{
+			User: db.NewMongoUserStore(client),
+		},
 	}
 
 }
@@ -63,7 +65,7 @@ func TestPostUser(t *testing.T) {
 
 	// Start Fiber server
 	app := fiber.New()
-	userHandler := NewUserHandler(tdb)
+	userHandler := NewUserHandler(tdb.Store)
 	app.Post("/user/", userHandler.HandlePostUser)
 
 	req, newUser := CreateUserRequest(t)
@@ -107,7 +109,7 @@ func TestGetUsers(t *testing.T) {
 
 	// Setup Fiber
 	app := fiber.New()
-	userHandler := NewUserHandler(tdb)
+	userHandler := NewUserHandler(tdb.Store)
 	app.Get("/users", userHandler.HandleGetUsers)
 	app.Post("/user", userHandler.HandlePostUser)
 
@@ -159,7 +161,7 @@ func TestGetUser(t *testing.T) {
 
 	// Open Fiber
 	app := fiber.New()
-	userHandler := NewUserHandler(tdb)
+	userHandler := NewUserHandler(tdb.Store)
 	app.Post("/user/", userHandler.HandlePostUser)
 	app.Get("/user/:id", userHandler.HandleGetUser)
 
@@ -204,7 +206,7 @@ func TestDeleteUser(t *testing.T) {
 	tdb := setup(t)
 	defer tdb.dropDb(t)
 
-	userHandler := NewUserHandler(tdb)
+	userHandler := NewUserHandler(tdb.Store)
 	app := fiber.New()
 	app.Post("/user", userHandler.HandlePostUser)
 	app.Delete("/user/:id", userHandler.HandleDeleteUser)
@@ -250,7 +252,7 @@ func TestPutUser(t *testing.T) {
 	tdb := setup(t)
 	defer tdb.dropDb(t)
 
-	userHandler := NewUserHandler(tdb)
+	userHandler := NewUserHandler(tdb.Store)
 	app := fiber.New()
 	app.Post("/user", userHandler.HandlePostUser)
 	app.Put("/user/:id", userHandler.HandlePutUser)

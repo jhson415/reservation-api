@@ -11,13 +11,13 @@ import (
 )
 
 type UserHandler struct {
-	ctx       context.Context
-	userStore db.UserStore
+	ctx   context.Context
+	store db.Store
 }
 
-func NewUserHandler(userStore db.UserStore) *UserHandler {
+func NewUserHandler(store db.Store) *UserHandler {
 	return &UserHandler{
-		userStore: userStore,
+		store: store,
 	}
 }
 
@@ -27,7 +27,7 @@ func (m *UserHandler) HandleGetUser(c *fiber.Ctx) error {
 		ctx = c.Context()
 	)
 
-	user, err := m.userStore.GetUserById(ctx, id)
+	user, err := m.store.User.GetUserById(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -38,7 +38,7 @@ func (m *UserHandler) HandleGetUsers(c *fiber.Ctx) error {
 	var (
 		ctx = c.Context()
 	)
-	users, err := m.userStore.GetUserList(ctx)
+	users, err := m.store.User.GetUserList(ctx)
 	if err != nil {
 		return err
 	}
@@ -61,7 +61,7 @@ func (m *UserHandler) HandlePostUser(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	result, err := m.userStore.PostUser(ctx, user)
+	result, err := m.store.User.PostUser(ctx, user)
 	if err != nil {
 		return err
 	}
@@ -74,7 +74,7 @@ func (m *UserHandler) HandleDeleteUser(c *fiber.Ctx) error {
 		ctx    = c.Context()
 	)
 
-	if err := m.userStore.DeleteUser(ctx, params); err != nil {
+	if err := m.store.User.DeleteUser(ctx, params); err != nil {
 		return err
 	}
 	response := map[string]string{"status": "User Deleted"}
@@ -95,7 +95,7 @@ func (m *UserHandler) HandlePutUser(c *fiber.Ctx) error {
 		return err
 	}
 	filter := bson.M{"_id": oid}
-	if err := m.userStore.PutUser(ctx, filter, params); err != nil {
+	if err := m.store.User.PutUser(ctx, filter, params); err != nil {
 		return err
 	}
 	return c.JSON(map[string]string{"updated": userID})

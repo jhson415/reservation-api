@@ -12,10 +12,6 @@ import (
 
 const userColl = "users"
 
-type Dropper interface {
-	Drop(ctx context.Context) error
-}
-
 type UserStore interface {
 	Dropper
 	GetUserById(context.Context, string) (*types.User, error)
@@ -55,7 +51,6 @@ func (m MongoUserStore) GetUserList(ctx context.Context) (*[]types.User, error) 
 	var (
 		users = []types.User{}
 	)
-	m.coll.Find(ctx, bson.M{})
 	cur, err := m.coll.Find(ctx, bson.M{})
 	if err != nil {
 		return nil, err

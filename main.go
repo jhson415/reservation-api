@@ -31,16 +31,26 @@ func main() {
 	flag.Parse()
 
 	app := fiber.New(config)
+	userStore := db.NewMongoUserStore(client)
+	hotelStore := db.NewMongoHotelStore(client)
+	roomStore := db.NewMongoRoomStore(client, hotelStore)
 
-	userHandler := api.NewUserHandler(db.NewMongoUserStore(client))
+	store := db.Store{
+		User:  userStore,
+		Hotel: hotelStore,
+		Room:  roomStore,
+	}
+
+	userHandler := api.NewUserHandler(store)
+	hotelHandler := api.NewHotelHandler(store)
 
 	//Version1
 	apiV1 := app.Group("/api/v1")
 
 	// Hotel
-	apiV1.Get("/hotel/", handlerFoo)
-	apiV1.Get("/hotel/:id", handlerFoo)
-	apiV1.Get("/hotel/:id/rooms", handlerFoo)
+	apiV1.Get("/hotel/", hotelHandler.HandleGetHotels)
+	apiV1.Get("/hotel/:id", hotelHandler.HandleGetHotel)
+	apiV1.Get("/hotel/:id/room", hotelHandler.HandleGetRooms)
 
 	// User
 	apiV1.Put("/user/:id", userHandler.HandlePutUser)
@@ -54,5 +64,5 @@ func main() {
 }
 
 func handlerFoo(c *fiber.Ctx) error {
-	return c.JSON(map[string]string{"msg": "this is the landing!"})
+	return c.JSON(map[string]string{"msg": "this is the landing!!"})
 }
