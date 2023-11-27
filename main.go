@@ -1,3 +1,5 @@
+// TODO Create DB Seed -> Default setting of the db when it needs to be reset
+
 package main
 
 import (
@@ -14,8 +16,7 @@ import (
 )
 
 func main() {
-	const dbUri = "mongodb://localhost:27017"
-	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(dbUri))
+	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(db.DB_URI))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -30,15 +31,38 @@ func main() {
 	flag.Parse()
 
 	app := fiber.New(config)
+	userStore := db.NewMongoUserStore(client)
+	hotelStore := db.NewMongoHotelStore(client)
+	roomStore := db.NewMongoRoomStore(client, hotelStore)
 
-	userHandler := api.NewUserHandler(db.NewMongoUserStore(client))
+	store := db.Store{
+		User:  userStore,
+		Hotel: hotelStore,
+		Room:  roomStore,
+	}
 
+	userHandler := api.NewUserHandler(store)
+	hotelHandler := api.NewHotelHandler(store)
+
+	//Version1
 	apiV1 := app.Group("/api/v1")
+
+	// Hotel
+	apiV1.Get("/hotel/", hotelHandler.HandleGetHotels)
+	apiV1.Get("/hotel/:id", hotelHandler.HandleGetHotel)
+	apiV1.Get("/hotel/:id/room", hotelHandler.HandleGetRooms)
+
+	// User
+	apiV1.Put("/user/:id", userHandler.HandlePutUser)
+	apiV1.Post("/user/", userHandler.HandlePostUser)
+	apiV1.Delete("/user/:id", userHandler.HandleDeleteUser)
+	apiV1.Get("/user/", userHandler.HandleGetUsers)
 	apiV1.Get("/user/:id", userHandler.HandleGetUser)
+
 	app.Listen(*listenAddr)
 	fmt.Println("Close!")
 }
 
 func handlerFoo(c *fiber.Ctx) error {
-	return c.JSON(map[string]string{"msg": "this is the landing!"})
+	return c.JSON(map[string]string{"msg": "this is the landing!!"})
 }
